@@ -112,9 +112,80 @@ const validateChangePassword = (req, res, next) => {
   return next();
 };
 
+const validateQuestionCreate = (req, res, next) => {
+  const errors = [];
+  const title = String(req.body.title || "").trim();
+  const description = String(req.body.description || "").trim();
+  const subject = String(req.body.subject || "").trim().toLowerCase();
+  const topic = String(req.body.topic || "").trim().toLowerCase();
+  const difficulty = String(req.body.difficulty || "").trim().toLowerCase();
+  const correctAnswer = String(req.body.correctAnswer || "").trim();
+  const explanation = String(req.body.explanation || "").trim();
+
+  const tags = Array.isArray(req.body.tags) ? req.body.tags : [];
+  const options = Array.isArray(req.body.options) ? req.body.options : [];
+
+  if (title.length < 5) {
+    errors.push("Title must be at least 5 characters");
+  }
+
+  if (description.length < 10) {
+    errors.push("Description must be at least 10 characters");
+  }
+
+  if (subject.length === 0) {
+    errors.push("Subject is required");
+  }
+
+  if (topic.length === 0) {
+    errors.push("Topic is required");
+  }
+
+  if (!["easy", "medium", "hard"].includes(difficulty)) {
+    errors.push("Difficulty must be one of: easy, medium, hard");
+  }
+
+  if (correctAnswer.length === 0) {
+    errors.push("Correct answer is required");
+  }
+
+  if (!tags.every((tag) => typeof tag === "string" && tag.trim().length > 0)) {
+    errors.push("Tags must be a string array");
+  }
+
+  if (
+    !options.every(
+      (option) => typeof option === "string" && option.trim().length > 0
+    )
+  ) {
+    errors.push("Options must be a string array");
+  }
+
+  if (options.length > 0 && !options.map((option) => option.trim()).includes(correctAnswer)) {
+    errors.push("For MCQ, correctAnswer must match one of the provided options");
+  }
+
+  if (errors.length > 0) {
+    return res.status(400).json({ errors });
+  }
+
+  req.body.title = title;
+  req.body.description = description;
+  req.body.subject = subject;
+  req.body.topic = topic;
+  req.body.difficulty = difficulty;
+  req.body.correctAnswer = correctAnswer;
+  req.body.explanation = explanation;
+  req.body.tags = tags.map((tag) => tag.trim().toLowerCase());
+  req.body.options = options.map((option) => option.trim());
+
+  return next();
+};
+
 module.exports = {
   validateRegister,
   validateLogin,
   validateProfileUpdate,
   validateChangePassword,
+  validateQuestionCreate,
 };
